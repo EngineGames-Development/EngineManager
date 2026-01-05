@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="keywords" content="Password, Manager, PasswordManager, Engine, EngineGames">
+    <meta name="description" content="Engine-Manager is a very secure password-manager which has">
+    <meta name="subject" content="Password-Manager">
+    <meta name="language" content="EN">
+    <meta name="topic" content="Password-Manager">
+    <meta name="summary" content="Very secure password manager">
+    <meta name="Classification" content="Security">
+    <meta name="author" content="EngineGames">
+    <meta name="designer" content="EngineGames">
+    <meta name="owner" content="EngineGames">
+    <meta http-equiv="Content-Security-Policy"
+      content="
+           style-src 'self' https://cdnjs.cloudflare.com;
+           font-src 'self' https://cdnjs.cloudflare.com;
+           img-src 'self' data:;
+           object-src 'none';
+           base-uri 'self';
+           form-action 'self';">
+
+    <link rel="stylesheet" href="Offline.css" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" href="favicon.png" type="image/png">
+    <title>Engine-Manager | Offline</title>
+</head>
+<body>
+   <section id="nav">
+    <div class="navbar">
+      <div class="navbar-brand">
+        <img src="EngineManager.png" alt="Logo">
+        <span><a href="index.html"><h1>Engine</h1><h1 id="manager">Manager</h1></a></span>
+      </div>
+      <form name="search" class="search-container">
+        <input class="nav-search" name="Search" type="text" placeholder="Search for passwords and passkeys">
+        <button type="submit" class="search-btn icon-btn">
+          <i class="fa fa-search" aria-hidden="true"></i>
+        </button>
+      </form>
+      <div class="navbar-links">
+         <a href="Online.html" class="main-btn" id="onlineBtn">Online</a>
+         <a href="index.html" class="nav-btn">Main</a>
+         <h1 id="login-button" class="nav-login">Login</h1>
+      </div>
+    </div>
+   </section>
+   <section id="main">
+    <div class="container">
+      <div class="popup">
+        <h2>Online Mode</h2>
+        <p>Are you sure you want to enter Online-Mode?</p>
+        <span class="checkbox-row">
+         <input type="checkbox" id="dontShow">
+         <label for="dontShow">Don't show again!</label>
+        </span>
+        <button type="button">Enter</button>
+        <button type="button">Cancel</button>
+      </div>
+    </div>
+    <div class="add-container">
+      <div class="popup">
+        <h2>Add new password</h2>
+        <labels>Website/Provider</labels>
+        <input id="websiteinputbox" class="form-input" type="text" required>
+        <small id="websiteError" class="error-text"></small>
+        <labels>Username</labels>
+        <input id="username-input" class="form-input" type="text">
+        <labels>Password</labels>
+        <div class="input-wrapper">
+         <input name="password" class="form-input input-password" type="password" required>
+         <i class="fa-solid fa-puzzle-piece thinking"></i>
+         <i class="fa-solid fa-arrow-rotate-left generate"></i>
+         <i class="fa-solid fa-eye toggle-password"></i>
+        </div>
+        <small id="passwordError" class="error-text"></small>
+        <p>Remember to save your recent password</p>
+        <hr class="custom-line">
+        <labels>Note</labels>
+        <textarea id="note" placeholder="Write a note..."></textarea>
+        <button id="addpasswordBtn" type="button">Add</button>
+        <button class="cancel-btn" type="button">Cancel</button>
+      </div>
+    </div>
+    <div class="master-password-container">
+      <div class="popup">
+        <h2>Set a master password</h2>
+        <div class="input-wrapper">
+         <input name="password" class="form-input input-password" type="password" required>
+         <i class="fa-solid fa-print print"></i>
+         <div class="paper"></div>
+         <i class="fa-solid fa-arrow-rotate-left generate"></i>
+         <i class="fa-solid fa-eye toggle-password"></i>
+        </div>
+        <button id="addpasswordBtn" type="button">Add</button>
+        <button class="cancel-btn" type="button">Cancel</button>
+      </div>
+    </div>
+    <div class="main-header">
+      <h1>Passwords and Passkeys</h1>
+      <button id="add-button" class="add-btn">Add</button>
+    </div>
+    <p>Create and manage passwords.</p>
+    <div id="password-container"></div>
+   </section>
+  <footer id="footer">
+  <div class="footer-content">
+    <img src="EngineManager.png" alt="Logo" class="footer-logo">
+    <span class="footer-title">
+      <a href="/"><h1>Engine</h1><h1 id="manager">Manager</h1></a>
+    </span>
+    <div class="footer-buttons">
+      <a href="https://www.youtube.com/@The_Core_dumped" target="_blank" class="footer-btn youtube-btn">
+        <img src="Youtube_logo.png" alt="YouTube" width="50px" height=auto>
+      </a>
+      <button id="footer-theme-toggle" class="footer-btn">🌙</button>
+    </div>
+    <p class="footer-text">© 2026 EngineGames — Secure Password Management</p>
+  </div>
+  </footer>
+<script type="module" src="./js/main.js"></script>
+</body>
+</body>
+</html>
