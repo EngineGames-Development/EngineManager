@@ -65,13 +65,6 @@ labels {
     margin-bottom: 5px;
 }
 
-.error-text {
-  color: #ff0000;
-  font-size: 12px;
-  display: none;
-  margin-top: 4px;
-}
-
 .input-wrapper {
   position: relative;
   width: 100%;
@@ -90,6 +83,21 @@ labels {
 
 .form-input.input-error {
     border-bottom: 2px solid #ff0000;
+}
+
+.input-error {
+    border: 2px solid #e74c3c;
+}
+
+.input-valid {
+    border: 2px solid #2ecc71;
+}
+
+.error-text {
+    color: #e74c3c;
+    font-size: 0.85rem;
+    display: block;
+    margin-top: 4px;
 }
 
 .form-input.changed {
