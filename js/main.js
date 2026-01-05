@@ -2,6 +2,7 @@ import { applyTheme, setupThemeToggle } from './theme.js';
 import { validateWebsite, validatePassword } from './validation.js';
 import { generateRandomPassword, generateMemorablePassword } from './passwordGen.js';
 import { showError, showValid, togglePasswordVisibility, triggerPrint } from './ui.js';
+import {SecurePDF} from './secure_pdf.js';
 
 document.addEventListener("DOMContentLoaded", () => {
     setupThemeToggle();
@@ -62,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
             result.valid ? showValid(passwordInput) : showError(passwordInput, result.error);
         });
 
-        if (printBtn && paper) printBtn.addEventListener("click", () => triggerPrint(printBtn, paper));
+        if (printBtn && paper) printBtn.addEventListener("click", () => triggerPrint(printBtn, paper,passwordInput.value));
     });
 
     if (passwordContainer.children.length === 0) {
@@ -104,6 +105,13 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    document.querySelector(".print").addEventListener("click", () => {
+      const masterPasswordInput = document.querySelector('.master-password-container input');
+      const masterPassword = masterPasswordInput.value.trim();
+
+      SecurePDF.createSecurePDF(masterPassword, 'masterpassword.pdf');
+    });
+    
     document.querySelectorAll(".cancel-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             addContainer.style.display = "none";
