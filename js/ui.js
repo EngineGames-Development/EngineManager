@@ -41,7 +41,7 @@ export function togglePasswordVisibility(input, toggleBtn) {
     toggleBtn.classList.toggle('active', isPassword);
 }
 
-export function triggerPrint(printer, paper, passwordInput) {
+export function triggerPrint(printer, paper) {
     printer.classList.add('active');
     paper.classList.add('active');
 

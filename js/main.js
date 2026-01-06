@@ -2,7 +2,8 @@ import { applyTheme, setupThemeToggle } from './theme.js';
 import { validateWebsite, validatePassword } from './validation.js';
 import { generateRandomPassword, generateMemorablePassword } from './passwordGen.js';
 import { showError, showValid, togglePasswordVisibility, triggerPrint } from './ui.js';
-import {SecurePDF} from './secure_pdf.js';
+import { SecurePDF } from './secure_pdf.js';
+import { encryptData,decryptData, wrapDEK } from './password_encryption.js';
 
 document.addEventListener("DOMContentLoaded", () => {
     setupThemeToggle();
@@ -17,6 +18,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const onlineBtn = document.getElementById("onlineBtn");
     const addBtn = document.getElementById("add-button");
+    const addmasterpasswordBtn = document.getElementById("addmasterpasswordBtn");
+    const masterpasswordinput = document.getElementById("master-password-input");
 
     const onlinePopup = container.querySelector(".popup");
     const onlineEnterBtn = onlinePopup.querySelector("button:first-of-type");
@@ -66,12 +69,33 @@ document.addEventListener("DOMContentLoaded", () => {
         if (printBtn && paper) printBtn.addEventListener("click", () => triggerPrint(printBtn, paper,passwordInput.value));
     });
 
-    if (passwordContainer.children.length === 0) {
-        const header = document.createElement("h1");
-        header.id = "password-text";
-        header.textContent = "No passwords yet!";
-        passwordContainer.appendChild(header);
+    function addPassword() {
+
     }
+
+    function isMasterPasswordSet() {
+      return localStorage.getItem("wrappedDEK") !== null;
+    }
+
+    function updateEmptyState() {
+     const hasPasswords =
+       passwordContainer.querySelectorAll(".password-item").length > 0;
+
+     const header = passwordContainer.querySelector("#password-text");
+
+     if (!hasPasswords) {
+      if (!header) {
+        const h1 = document.createElement("h1");
+        h1.id = "password-text";
+        h1.textContent = "No passwords yet!";
+        passwordContainer.appendChild(h1);
+      }
+     } else {
+      header?.remove();
+     }
+    }
+
+    updateEmptyState();
 
     onlineBtn.addEventListener("click", e => {
         e.preventDefault();
@@ -88,21 +112,54 @@ document.addEventListener("DOMContentLoaded", () => {
     onlineCancelBtn.addEventListener("click", () => container.style.display = "none");
 
     addBtn.addEventListener("click", () => addContainer.style.display = "flex");
-
+    
     document.querySelectorAll(".add-password-btn, #addpasswordBtn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            const websiteResult = validateWebsite(websiteInput.value.trim());
-            const activePasswordInput = addContainer.querySelector(".input-wrapper input");
-            const passwordResult = validatePassword(activePasswordInput.value.trim());
+      btn.addEventListener("click", () => {
+        const websiteValue = websiteInput.value.trim();
+        const activePasswordInput = addContainer.querySelector(".input-wrapper input");
+        const passwordValue = activePasswordInput.value.trim();
 
-            websiteResult.valid ? showValid(websiteInput) : showError(websiteInput, websiteResult.error);
-            passwordResult.valid ? showValid(activePasswordInput) : showError(activePasswordInput, passwordResult.error);
+        const websiteResult = validateWebsite(websiteValue);
+        const passwordResult = validatePassword(passwordValue);
 
-            if (websiteResult.valid && passwordResult.valid) {
-                addContainer.style.display = "none";
-                masterPasswordContainer.style.display = "flex";
-            }
-        });
+        websiteResult.valid
+            ? showValid(websiteInput)
+            : showError(websiteInput, websiteResult.error);
+
+        passwordResult.valid
+            ? showValid(activePasswordInput)
+            : showError(activePasswordInput, passwordResult.error);
+
+        if (!websiteResult.valid || !passwordResult.valid) return;
+
+        addContainer.style.display = "none";
+
+        if (isMasterPasswordSet()) {
+            addPassword();
+        } else {
+            masterPasswordContainer.style.display = "flex";
+        }
+      });
+    });
+
+    addmasterpasswordBtn.addEventListener("click", async () => {
+        const masterpassword = masterpasswordinput.value.trim();
+        if (!masterpassword) {
+            alert("Enter a master password!")
+            return;
+        }
+
+        const dek = crypto.getRandomValues(new Uint8Array(32));
+        
+        const wrapped = await wrapDEK(masterpassword,dek);
+
+        localStorage.setItem("wrappedDEK", JSON.stringify(wrapped));
+
+        alert("Master password saved securely!");
+        masterpasswordinput.value = "";
+
+        updateEmptyState();
+        addPassword();
     });
 
     document.querySelector(".print").addEventListener("click", () => {
@@ -111,7 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       SecurePDF.createSecurePDF(masterPassword, 'masterpassword.pdf');
     });
-    
+
     document.querySelectorAll(".cancel-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             addContainer.style.display = "none";

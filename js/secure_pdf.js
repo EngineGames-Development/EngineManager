@@ -22,12 +22,12 @@ export const SecurePDF = {
     });
 
     const passwordMessage = `
-Important: This is your master password:
-${masterPassword}
+    Important: This is your master password:
+    ${masterPassword}
 
-Keep it safe. If you lose it, it cannot be recovered.
-Print or store it securely.
-`;
+    Keep it safe. If you lose it, it cannot be recovered.
+    Print or store it securely.
+    `;
     page.drawText(passwordMessage, {
       x: 50,
       y: 250,
