@@ -62,7 +62,8 @@
       <button id="footer-theme-toggle" class="footer-btn">🌙</button>
     </div>
   </div>
-  <p class="footer-text">© 2026 EngineGames — Secure Password Management</p>
+  <p class="footer-text">© <span id="year"></span> EngineGames — Secure Password Management</p>
+  <script>document.getElementById("year").textContent = new Date().getFullYear();</script>
   </footer>
 <script src="script.js" type="text/javascript"></script>
 </body>

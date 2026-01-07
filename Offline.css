@@ -688,7 +688,7 @@ footer {
     color: #ffffff;
     font-weight: 300;
 }
-.footer-text {
+.footer-text, #year {
     font-size: 0.9rem;
     color: #e2e2e2;
     margin: 0;
