@@ -26,6 +26,16 @@ export async function getKeyFromPassword(masterPassword, salt, iterations = 500_
     );
 }
 
+export async function importDEK(rawDek) {
+    return crypto.subtle.importKey(
+        "raw",
+        rawDek,
+        { name: "AES-GCM" },
+        true,
+        ["encrypt", "decrypt"]
+    );
+}
+
 export async function wrapDEK(masterPassword, dek) {
     const salt = crypto.getRandomValues(new Uint8Array(16));
     const wrappingKey = await getKeyFromPassword(masterPassword, salt);

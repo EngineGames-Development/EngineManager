@@ -16,13 +16,17 @@
     <meta name="owner" content="EngineGames">
 
     <meta http-equiv="Content-Security-Policy"
-          content="
-              style-src 'self';
-              img-src 'self' data:;
-              object-src 'none';
-              base-uri 'self';
-              form-action 'self';
-          ">
+        content="
+           default-src 'self';
+           script-src 'self';
+           style-src 'self' https://cdnjs.cloudflare.com;
+           font-src 'self' https://cdnjs.cloudflare.com;
+           img-src 'self' data:;
+           object-src 'none';
+           base-uri 'self';
+           form-action 'self';
+           connect-src 'self';
+           frame-ancestors 'none';">
 
     <link rel="stylesheet" href="styles.css" type="text/css"/>
     <link rel="icon" href="./EngineManager.png" type="image/png"/>
@@ -145,7 +149,7 @@
                 </a>
                 <button id="footer-theme-toggle" class="footer-btn">🌙</button>
             </div>
-            <p class="footer-text">© <span id="year"></span> EngineGames — Secure Password Management</p>
+            <p class="footer-text">©<span id="year"></span> EngineGames — Secure Password Management</p>
             <script>document.getElementById("year").textContent = new Date().getFullYear();</script>
         </div>
     </footer>

@@ -1,0 +1,1 @@
+// Autolock with masterpassword coming soon. If no masterpassword there will be no autolock!

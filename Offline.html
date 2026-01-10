@@ -15,12 +15,16 @@
     <meta name="owner" content="EngineGames">
     <meta http-equiv="Content-Security-Policy"
       content="
+           default-src 'self';
+           script-src 'self' 'unsafe-inline';
            style-src 'self' https://cdnjs.cloudflare.com;
            font-src 'self' https://cdnjs.cloudflare.com;
-           img-src 'self' data:;
+           img-src 'self' https://www.freeiconspng.com/uploads/globe-icon-18.png;
            object-src 'none';
            base-uri 'self';
-           form-action 'self';">
+           form-action 'self';
+           connect-src 'self';
+           frame-ancestors 'none';">
 
     <link rel="stylesheet" href="Offline.css" type="text/css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -70,7 +74,7 @@
         <input id="username-input" class="form-input" type="text">
         <labels>Password</labels>
         <div class="input-wrapper">
-         <input name="password" class="form-input input-password" type="password" required>
+         <input name="password" id="password-input" class="form-input input-password" type="password" required>
          <i class="fa-solid fa-puzzle-piece thinking"></i>
          <i class="fa-solid fa-arrow-rotate-left generate"></i>
          <i class="fa-solid fa-eye toggle-password"></i>
@@ -119,7 +123,7 @@
       </a>
       <button id="footer-theme-toggle" class="footer-btn">🌙</button>
     </div>
-    <p class="footer-text">© <span id="year"></span> EngineGames — Secure Password Management</p>
+    <p class="footer-text">©<span id="year"></span> EngineGames — Secure Password Management</p>
     <script>document.getElementById("year").textContent = new Date().getFullYear();</script>
   </div>
   </footer>

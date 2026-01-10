@@ -301,6 +301,16 @@ button {
     z-index: 1000;
 }
 
+.passwords {
+  width: 320px;
+  height: 50px;
+  padding: 10px;
+  border: none;
+  border-radius: 12px 12px 0 0;
+  outline: none;
+  margin: 0;
+}
+
 .popup {
     background: #fff;
     color: #000;
@@ -688,12 +698,17 @@ footer {
     color: #ffffff;
     font-weight: 300;
 }
-.footer-text, #year {
+.footer-text {
+    white-space: nowrap;
     font-size: 0.9rem;
     color: #e2e2e2;
     margin: 0;
     padding: 0;
     line-height: 1.2;
+}
+
+.footer-text span {
+    display: inline;
 }
 
 .footer-buttons {

@@ -353,11 +353,16 @@ footer {
 }
 
 .footer-text {
+  white-space: nowrap;
   font-size: 0.9rem;
   color: #e2e2e2;
   margin: 0;
   padding: 0;
   line-height: 1.2;
+}
+
+.footer-text span {
+    display: inline;
 }
 
 .footer-buttons {

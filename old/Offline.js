@@ -197,7 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (passwordcontainer.children.length === 0) {
     let passwordtext = document.createElement("h1");
-    passwordtext.innerText = "No passwords yet!";
+    passwordtext.textContent = "No passwords yet!";
     passwordtext.id = "password-text";
     passwordcontainer.appendChild(passwordtext);
   }

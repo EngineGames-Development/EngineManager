@@ -1,9 +1,11 @@
 import { applyTheme, setupThemeToggle } from './theme.js';
+import {} from './autolock.js';
 import { validateWebsite, validatePassword } from './validation.js';
 import { generateRandomPassword, generateMemorablePassword } from './passwordGen.js';
 import { showError, showValid, togglePasswordVisibility, triggerPrint } from './ui.js';
 import { SecurePDF } from './secure_pdf.js';
-import { encryptData,decryptData, wrapDEK } from './password_encryption.js';
+import { wrapDEK } from './password_encryption.js';
+import { addPassword } from './password_creation.js';
 
 document.addEventListener("DOMContentLoaded", () => {
     setupThemeToggle();
@@ -68,10 +70,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (printBtn && paper) printBtn.addEventListener("click", () => triggerPrint(printBtn, paper,passwordInput.value));
     });
-
-    function addPassword() {
-
-    }
 
     function isMasterPasswordSet() {
       return localStorage.getItem("wrappedDEK") !== null;
