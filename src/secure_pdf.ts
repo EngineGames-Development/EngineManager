@@ -5,13 +5,10 @@ export const SecurePDF = {
       return;
     }
 
-    // 1️⃣ Dynamically import pdf-lib from CDN
-    // @ts-ignore: dynamic import from URL
     const { PDFDocument, StandardFonts, rgb } = await import(
       "https://cdn.jsdelivr.net/npm/pdf-lib@1.21.0/dist/pdf-lib.min.js"
     ) as any;
 
-    // 2️⃣ Create PDF
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([600, 400]);
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -39,11 +36,9 @@ Print or store it securely.
       color: rgb(0, 0, 0),
     });
 
-    // 3️⃣ Save PDF and get ArrayBuffer
     const pdfBytes = await pdfDoc.save();
     const pdfArrayBuffer = new Uint8Array(pdfBytes).buffer;
 
-    // 4️⃣ Derive AES key
     const encoder = new TextEncoder();
     const passwordKey = await crypto.subtle.importKey(
       "raw",
@@ -66,7 +61,6 @@ Print or store it securely.
       ["encrypt", "decrypt"]
     );
 
-    // 5️⃣ Encrypt PDF
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const encryptedBuffer = await crypto.subtle.encrypt(
       { name: "AES-GCM", iv },
@@ -74,19 +68,16 @@ Print or store it securely.
       pdfArrayBuffer
     );
 
-    // 6️⃣ Combine IV + ciphertext
     const combined = new Uint8Array(iv.length + encryptedBuffer.byteLength);
     combined.set(iv, 0);
     combined.set(new Uint8Array(encryptedBuffer), iv.length);
 
-    // 7️⃣ Download encrypted PDF (.enc)
     const encryptedBlob = new Blob([combined], { type: "application/octet-stream" });
     const encryptedLink = document.createElement("a");
     encryptedLink.href = URL.createObjectURL(encryptedBlob);
     encryptedLink.download = filename.replace(".pdf", ".enc");
     encryptedLink.click();
 
-    // 8️⃣ Download printable PDF
     const printableBlob = new Blob([new Uint8Array(pdfArrayBuffer)], { type: "application/pdf" });
     const printableLink = document.createElement("a");
     printableLink.href = URL.createObjectURL(printableBlob);

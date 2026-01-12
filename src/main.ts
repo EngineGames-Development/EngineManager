@@ -2,7 +2,7 @@ import { applyTheme, setupThemeToggle } from './theme.js';
 import { validateWebsite, validatePassword } from './validation.js';
 import { generateRandomPassword, generateMemorablePassword } from './passwordGen.js';
 import { showError, showValid, togglePasswordVisibility, triggerPrint, updateEmptyState } from './ui.js';
-//import { SecurePDF } from './secure_pdf.js';
+import { SecurePDF } from './secure_pdf.js';
 import { wrapDEK } from './password_encryption.js';
 import { addPassword } from './password_creation.js';
 
@@ -196,7 +196,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const masterPasswordInput = getElement<HTMLInputElement>('.master-password-container input');
       const masterPassword = masterPasswordInput.value.trim();
 
-      //SecurePDF.createSecurePDF(masterPassword, 'masterpassword.pdf');
+      SecurePDF.createSecurePDF(masterPassword, 'masterpassword.pdf');
     });
 
     document.querySelectorAll(".cancel-btn").forEach(btn => {

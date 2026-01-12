@@ -35,7 +35,7 @@ export async function getKeyFromPassword(
     return crypto.subtle.deriveKey(
         {
             name: "PBKDF2",
-            salt: salt.buffer as ArrayBuffer, // CAST here
+            salt: salt.buffer as ArrayBuffer,
             iterations,
             hash: "SHA-256",
         },
@@ -49,7 +49,7 @@ export async function getKeyFromPassword(
 export async function importDEK(rawDek: Uint8Array): Promise<CryptoKey> {
     return crypto.subtle.importKey(
         "raw",
-        rawDek.buffer as ArrayBuffer, // CAST here
+        rawDek.buffer as ArrayBuffer,
         { name: "AES-GCM" },
         true,
         ["encrypt", "decrypt"]
@@ -96,7 +96,7 @@ export async function unwrapDEK(
 
     const cryptoKey = await crypto.subtle.unwrapKey(
         "raw",
-        wrappedKey as ArrayBuffer, // CAST here
+        wrappedKey as ArrayBuffer,
         wrappingKey,
         "AES-KW",
         { name: "AES-GCM", length: 256 },

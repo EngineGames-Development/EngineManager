@@ -23,7 +23,6 @@ export async function generateMemorablePassword({
     const res = await fetch("./wordlist.txt");
     const text = await res.text();
 
-    // Split words from the wordlist file
     const words: string[] = text
         .split("\n")
         .map(line => line.split("\t")[1])
@@ -32,7 +31,6 @@ export async function generateMemorablePassword({
     const symbols: string = "!@#$%^&*";
     const numbers: string = "0123456789";
 
-    // Secure random helper
     const secureRandom = (max: number): number => {
         const buf = new Uint32Array(1);
         crypto.getRandomValues(buf);
@@ -41,14 +39,12 @@ export async function generateMemorablePassword({
 
     const parts: string[] = [];
 
-    // Pick random words
     for (let i = 0; i < wordCount; i++) {
         let word = words[secureRandom(words.length)];
         word = word.charAt(0).toUpperCase() + word.slice(1);
         parts.push(word);
     }
 
-    // Insert a random number and symbol
     parts.splice(secureRandom(parts.length), 0, numbers[secureRandom(numbers.length)]);
     parts.splice(secureRandom(parts.length), 0, symbols[secureRandom(symbols.length)]);
 
