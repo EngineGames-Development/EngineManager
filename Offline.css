@@ -301,14 +301,29 @@ button {
     z-index: 1000;
 }
 
-.passwords {
-  width: 320px;
-  height: 50px;
-  padding: 10px;
-  border: none;
-  border-radius: 12px 12px 0 0;
-  outline: none;
-  margin: 0;
+.password-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--card-bg);
+  border-radius: 10px;
+  margin: 0 auto 10px;
+  max-width: 500px;
+  width: 100%;
+}
+
+.password-item img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    display: block;
+}
+
+.passwordsvg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
 }
 
 .popup {

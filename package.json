@@ -1,24 +1,5 @@
 {
-  "name": "engine-manager",
-  "version": "1.0.0",
-  "main": "main.js",
-  "scripts": {
-    "start": "electron ."
-  },
   "devDependencies": {
-    "electron": "^latest_version"
-  },
-  "build": {
-    "appId": "com.enginegames.enginemanager",
-    "productName": "Engine Manager",
-    "win": {
-      "icon": "EngineManager.ico"
-    },
-    "linux": {
-      "icon": "EngineManager.png"
-    },
-    "mac": {
-      "icon": "EngineManager.icns"
-    }
+    "pdf-lib": "^1.17.1"
   }
 }
