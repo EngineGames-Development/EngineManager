@@ -1,1 +1,1 @@
-add readme
+"The highly secure and efficient password manager. EngineManager is an excellent password manager for managing any sensitive data."
