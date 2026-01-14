@@ -807,6 +807,15 @@ p {
     letter-spacing: 0.5px;
 }
 
+noscript {
+    text-align: center;
+    font-family: "Helvetica","Arial",sans-serif;
+    font-size: xx-large;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    background: none;
+}
+
 @media (max-width: 850px) {
     .navbar {
         flex-direction: column;

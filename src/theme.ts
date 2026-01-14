@@ -2,7 +2,7 @@ const themeButtons = document.querySelectorAll('#theme-toggle, #footer-theme-tog
 
 let currentTheme = localStorage.getItem('theme') || 'system';
 
-export function applyTheme(theme : any) {
+export function applyTheme(theme : string) {
   if (theme === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
     themeButtons.forEach(btn => btn.textContent = '☀️');

@@ -1,1 +1,4 @@
 ErrorDocument 404 /enginemanager/404.html
+<IfModule mod_headers.c>
+  Header always set Content-Security-Policy "frame-ancestors 'self';"
+</IfModule>

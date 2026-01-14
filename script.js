@@ -1,5 +1,4 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 document.getElementById("year").textContent = new Date().getFullYear();
 function escapeHTML(str) {
     return str

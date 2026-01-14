@@ -15,7 +15,7 @@
     <meta name="owner" content="EngineGames">
     <meta http-equiv="Content-Security-Policy"
       content="
-           script-src 'self' 'unsafe-inline';
+           script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/npm/pdf-lib@1.21.0/dist/pdf-lib.min.js;
            style-src 'self' https://cdnjs.cloudflare.com;
            font-src 'self' https://cdnjs.cloudflare.com;
            object-src 'none';
@@ -29,6 +29,9 @@
     <title>Engine-Manager | Offline</title>
 </head>
 <body>
+   <noscript>
+    Please enable Javascript in order for the password manager to work!
+   </noscript>
    <section id="nav">
     <div class="navbar">
       <div class="navbar-brand">
@@ -124,6 +127,7 @@
   </div>
   </footer>
 <script type="module" src="./js/main.js"></script>
+
 </body>
 </body>
 </html>

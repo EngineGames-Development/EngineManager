@@ -4,10 +4,12 @@ export const SecurePDF = {
       alert("Please enter a master password first!");
       return;
     }
+    
+    const pdfLib = await import(
+      "https://cdn.jsdelivr.net/npm/pdf-lib@1.21.0/+esm"
+    );
 
-    const { PDFDocument, StandardFonts, rgb } = await import(
-      "https://cdn.jsdelivr.net/npm/pdf-lib@1.21.0/dist/pdf-lib.min.js"
-    ) as any;
+    const { PDFDocument, StandardFonts, rgb } = pdfLib.default;
 
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([600, 400]);

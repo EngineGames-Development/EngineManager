@@ -17,15 +17,14 @@
     <meta http-equiv="Content-Security-Policy"
         content="
            default-src 'self';
-           script-src 'self';
+           script-src 'self' 'unsafe-inline';
            style-src 'self' https://cdnjs.cloudflare.com;
            font-src 'self' https://cdnjs.cloudflare.com;
            img-src 'self' data:;
            object-src 'none';
            base-uri 'self';
            form-action 'self';
-           connect-src 'self';
-           frame-ancestors 'none';">
+           connect-src 'self';">
 
     <link rel="stylesheet" href="styles.css" type="text/css"/>
     <link rel="icon" href="EngineManager.png" type="image/x-icon"/>

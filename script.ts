@@ -1,6 +1,26 @@
-document.getElementById("year").textContent = new Date().getFullYear();
+function getID<T extends HTMLElement>(selector: string): T {
+  const el = document.getElementById(selector);
+  if (!el) throw new Error(`Element ${selector} not found`);
+  return el as T;
+}
+function getElement<T extends HTMLElement>(selector: string): T {
+  const el = document.querySelector(selector);
+  if (!el) throw new Error(`Element ${selector} not found`);
+  return el as T;
+}
 
-function escapeHTML(str) {
+function getChildElement<T extends HTMLElement>(
+  parent: Element,
+  selector: string
+): T {
+  const el = parent.querySelector(selector);
+  if (!el) throw new Error(`Element ${selector} not found inside parent`);
+  return el as T;
+}
+
+getID<HTMLSpanElement>("year").textContent = new Date().getFullYear().toString();
+
+export function escapeHTML(str : string) {
     return str
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -9,15 +29,16 @@ function escapeHTML(str) {
         .replace(/'/g, "&#039;");
 }
 
-document.getElementById("login-button").addEventListener("click", () => {
+getID<HTMLButtonElement>("login-button").addEventListener("click", () => {
     console.log("Login button clicked (placeholder)");
 });
 
 function setEqualHeightsPerRow() {
-    const container = document.querySelector('.card-container');
-    const cards = Array.from(container.children);
+    const container = getElement<HTMLDivElement>('.card-container');
+    if (!container) return;
+    const cards = Array.from(container.children) as HTMLElement[];
     let rowTop = 0;
-    let rowCards = [];
+    let rowCards : HTMLElement[] = [];
     let maxHeight = 0;
 
     cards.forEach(card => card.style.height = 'auto');
@@ -50,7 +71,7 @@ const themeButtons = document.querySelectorAll('#theme-toggle, #footer-theme-tog
 
 let currentTheme = localStorage.getItem('theme') || 'system';
 
-function applyTheme(theme) {
+function applyTheme(theme : string) {
   if (theme === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
     themeButtons.forEach(btn => btn.textContent = '☀️');
@@ -65,7 +86,6 @@ function applyTheme(theme) {
   currentTheme = theme;
 }
 
-
 themeButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     if (currentTheme === 'system') applyTheme('dark');
@@ -78,11 +98,11 @@ themeButtons.forEach(btn => {
 applyTheme(currentTheme);
 
 document.addEventListener("DOMContentLoaded", () => {
-  const container = document.querySelector(".container");
-  const onlineBtn = document.getElementById("onlineBtn");
-  const enterBtn = document.querySelector(".popup button:first-of-type");
-  const cancelBtn = document.querySelector(".popup button:last-of-type");
-  const dontShowCheckbox = document.querySelector(".popup input[type='checkbox']");
+  const container = getElement<HTMLDivElement>(".container");
+  const onlineBtn = getID<HTMLButtonElement>("onlineBtn");
+  const enterBtn = getElement<HTMLButtonElement>(".popup button:first-of-type");
+  const cancelBtn = getElement<HTMLButtonElement>(".popup button:last-of-type");
+  const dontShowCheckbox = getElement<HTMLInputElement>(".popup input[type='checkbox']");
 
   onlineBtn.addEventListener("click", (e) => {
     e.preventDefault();

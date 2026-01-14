@@ -1,5 +1,20 @@
 {
   "devDependencies": {
     "pdf-lib": "^1.17.1"
-  }
+  },
+  "name": "enginemanager",
+  "version": "1.0.0",
+  "description": "\"The highly secure and efficient password manager. EngineManager is an excellent password manager for managing any sensitive data.\"",
+  "main": "script.js",
+  "dependencies": {
+    "pako": "^1.0.11",
+    "tslib": "^1.14.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "types": "./script.d.ts"
 }
