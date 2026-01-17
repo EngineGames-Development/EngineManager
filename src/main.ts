@@ -4,6 +4,12 @@ import { generateRandomPassword, generateMemorablePassword } from './passwordGen
 import { showError, showValid, togglePasswordVisibility, triggerPrint, updateEmptyState } from './ui.js';
 import { SecurePDF } from './secure_pdf.js';
 import { wrapDEK } from './password_encryption.js';
+import {
+  startAutolock,
+  unlockApp,
+  isAppLocked,
+} from "./autolock.js";
+
 import { addPassword } from './password_creation.js';
 
 export function getID<T extends HTMLElement>(selector: string): T {
@@ -26,13 +32,46 @@ export function getChildElement<T extends HTMLElement>(
   return el as T;
 }
 
+export function showAutolock(show : any) {
+    const autolockOverlay = getElement<HTMLDivElement>(".autolock");
+    autolockOverlay.style.display = show ? "flex" : "none";
+}
+
+export function requireUnlocked() {
+    if (isAppLocked()) {
+      showAutolock(true);
+      throw new Error("App is locked");
+    }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+    const continueBtn = getID<HTMLButtonElement>("continueBtn");
+    const autolockPasswordInput = getID<HTMLInputElement>("autolock-password-input");
+
+    document.addEventListener("app-locked", () => {
+      showAutolock(true);
+    });
+
+    continueBtn.addEventListener("click", async () => {
+      const password = autolockPasswordInput.value;
+
+      const success = await unlockApp(password);
+
+      if (!success) {
+        alert("Incorrect master password");
+        return;
+      }
+
+      autolockPasswordInput.value = "";
+      showAutolock(false);
+    });
+
+    startAutolock();
     setupThemeToggle();
     applyTheme(localStorage.getItem("theme") || "system");
     getID<HTMLSpanElement>("year").textContent = new Date().getFullYear().toString();
-
+    
     const container = getElement<HTMLDivElement>(".container");
-    const passwordContainer = getID<HTMLInputElement>("password-container");
     const addContainer = getElement<HTMLDivElement>(".add-container");
     const masterPasswordContainer = getElement<HTMLDivElement>(".master-password-container");
 
@@ -184,6 +223,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const wrapped = await wrapDEK(masterpassword,dek);
 
         localStorage.setItem("wrappedDEK", JSON.stringify(wrapped));
+        startAutolock();
 
         alert("Master password saved securely!");
         masterpasswordinput.value = "";

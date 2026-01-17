@@ -104,6 +104,18 @@
         <button class="cancel-btn" type="button">Cancel</button>
       </div>
     </div>
+    <div class="autolock">
+      <div class="popup">
+        <h2>The passwordmanager has been locked do to unactivaty</h2>
+        <h3>Please enter your password below</h3>
+        <div class="input-wrapper">
+         <input name="password" id="autolock-password-input" class="form-input input-password" type="password" required>
+         <i class="fa-solid fa-eye toggle-password"></i>
+        </div>
+        <button id="continueBtn" type="button">Continue</button>
+        <button class="leave-btn" type="button">Leave</button>
+      </div>
+    </div>
     <div class="main-header">
       <h1>Passwords and Passkeys</h1>
       <button id="add-button" class="add-btn">Add</button>
@@ -127,7 +139,6 @@
   </div>
   </footer>
 <script type="module" src="./js/main.js"></script>
-
 </body>
 </body>
 </html>
