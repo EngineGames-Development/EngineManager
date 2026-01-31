@@ -14,15 +14,27 @@
     <meta name="designer" content="EngineGames">
     <meta name="owner" content="EngineGames">
     <meta http-equiv="Content-Security-Policy"
-      content="
-           script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/npm/pdf-lib@1.21.0/dist/pdf-lib.min.js;
-           style-src 'self' https://cdnjs.cloudflare.com;
-           font-src 'self' https://cdnjs.cloudflare.com;
-           object-src 'none';
-           base-uri 'self';
-           form-action 'self';
-           connect-src 'self';">
-
+    content="
+     default-src 'self';
+     script-src
+      'self'
+      'unsafe-inline';
+     style-src
+      'self'
+      https://cdnjs.cloudflare.com;
+     font-src
+      'self'
+      https://cdnjs.cloudflare.com;
+     connect-src
+      'self'
+      https://cdn.jsdelivr.net;
+     img-src
+      'self'
+      data: https://www.google.com https://t2.gstatic.com https://www.freeiconspng.com;
+      object-src 'none';
+      base-uri 'self';
+    ">
+    <script src="/js/vendor/pdf-lib.min.js"></script>
     <link rel="stylesheet" href="Offline.css" type="text/css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="icon" href="favicon.png" type="image/png">
@@ -80,6 +92,7 @@
          <i class="fa-solid fa-eye toggle-password"></i>
         </div>
         <small id="passwordError" class="error-text"></small>
+        <small id="passwordCheck" class="check-text"></small>
         <p>Remember to save your recent password</p>
         <hr class="custom-line">
         <labels>Note</labels>
@@ -113,7 +126,7 @@
          <i class="fa-solid fa-eye toggle-password"></i>
         </div>
         <button id="continueBtn" type="button">Continue</button>
-        <button class="leave-btn" type="button">Leave</button>
+        <button class="leave-btn" type="button" onclick="window.location.href='https://www.google.com';">Leave</button>
       </div>
     </div>
     <div class="main-header">
@@ -122,6 +135,18 @@
     </div>
     <p>Create and manage passwords.</p>
     <div id="password-container"></div>
+    <div class="password-validation">
+      <div class="popup">
+        <h2>To view this password you have to enter your master-password</h2>
+        <h3>Please enter your password below</h3>
+        <div class="input-wrapper">
+          <input name="password" id="validation-password-input" class="form-input input-password" type="password" required>
+          <i class="fa-solid fa-eye toggle-password"></i>
+        </div>
+        <button id="continueBtn" type="button">Continue</button>
+        <button class="leave-btn" type="button">Leave</button>
+      </div>
+    </div>
    </section>
   <footer id="footer">
   <div class="footer-content">

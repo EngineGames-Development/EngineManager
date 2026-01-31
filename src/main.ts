@@ -4,11 +4,7 @@ import { generateRandomPassword, generateMemorablePassword } from './passwordGen
 import { showError, showValid, togglePasswordVisibility, triggerPrint, updateEmptyState } from './ui.js';
 import { SecurePDF } from './secure_pdf.js';
 import { wrapDEK } from './password_encryption.js';
-import {
-  startAutolock,
-  unlockApp,
-  isAppLocked,
-} from "./autolock.js";
+import { startAutolock, unlockApp, isAppLocked, } from "./autolock.js";
 
 import { addPassword } from './password_creation.js';
 
@@ -89,6 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     websiteInput.addEventListener("input", () => {
         const result = validateWebsite(websiteInput.value.trim());
+
         result.valid ? showValid(websiteInput) : showError(websiteInput, result.error);
     });
 
@@ -102,10 +99,16 @@ document.addEventListener("DOMContentLoaded", () => {
         const printBtn = document.querySelector<HTMLElement>(".print");
 
         passwordInput.addEventListener("input", () => {
+            const checktext = getID<HTMLElement>("passwordCheck");
             const result = validatePassword(passwordInput.value.trim());
+            const strength = result.strength;
+            const estimatedtime = result.crackTime;
+
             result.valid
                 ? showValid(passwordInput)
                 : showError(passwordInput, result.error);
+
+            checktext.textContent = "Your password is: " + strength + " and takes about " + estimatedtime + " to crack.";
         });
 
         if (toggleBtn) {
@@ -124,10 +127,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 passwordInput.value = generateRandomPassword(24);
 
+                const checktext = getID<HTMLElement>("passwordCheck");
                 const result = validatePassword(passwordInput.value.trim());
+                const strength = result.strength;
+                const estimatedtime = result.crackTime;
+
                 result.valid
                     ? showValid(passwordInput)
                     : showError(passwordInput, result.error);
+
+                checktext.textContent = "Your password is: " + strength + " and takes about " + estimatedtime + " to crack.";
             });
         }
 
@@ -144,10 +153,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     separator: "-"
                 });
 
+                const checktext = getID<HTMLElement>("passwordCheck");
                 const result = validatePassword(passwordInput.value.trim());
+                const strength = result.strength;
+                const estimatedtime = result.crackTime;
+
                 result.valid
                     ? showValid(passwordInput)
                     : showError(passwordInput, result.error);
+
+                checktext.textContent = "Your password is: " + strength + " and takes about " + estimatedtime + " to crack.";
             });
         }
 
@@ -219,9 +234,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const dek = crypto.getRandomValues(new Uint8Array(32));
-        
-        const wrapped = await wrapDEK(masterpassword,dek);
 
+        const wrapped = await wrapDEK(masterpassword, dek);
+        
         localStorage.setItem("wrappedDEK", JSON.stringify(wrapped));
         startAutolock();
 

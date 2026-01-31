@@ -1,142 +1,170 @@
-export function arrayBufferToBase64(buffer: ArrayBuffer): string {
-    let binary = "";
-    const bytes = new Uint8Array(buffer);
-    bytes.forEach((b) => (binary += String.fromCharCode(b)));
-    return btoa(binary);
+function forceArrayBuffer(input: ArrayBuffer | SharedArrayBuffer | ArrayBufferView): ArrayBuffer {
+  if (input instanceof ArrayBuffer) return input.slice(0);
+  if (ArrayBuffer.isView(input)) return new Uint8Array(input.buffer, input.byteOffset, input.byteLength).slice().buffer;
+  return new Uint8Array(input as unknown as ArrayBuffer).slice().buffer;
 }
 
-export function base64ToArrayBuffer(base64: string): ArrayBuffer {
-    const binary = atob(base64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
-    }
-    return bytes.buffer;
+function ab2b64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+function b642ab(base64: string): ArrayBuffer {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
 }
 
 export function generateDEK(): Uint8Array {
-    return crypto.getRandomValues(new Uint8Array(32));
+  return crypto.getRandomValues(new Uint8Array(32));
 }
 
-export async function getKeyFromPassword(
-    masterPassword: string,
-    salt: Uint8Array,
-    iterations = 500_000
+async function deriveWrappingKey(
+  password: string,
+  kdf: { salt: ArrayBuffer; iterations: number; hash: 'SHA-512' | 'SHA-256' }
 ): Promise<CryptoKey> {
-    const enc = new TextEncoder();
-    const keyMaterial = await crypto.subtle.importKey(
-        "raw",
-        enc.encode(masterPassword),
-        "PBKDF2",
-        false,
-        ["deriveKey"]
-    );
+  const enc = new TextEncoder();
+  const baseKey = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(password),
+    'PBKDF2',
+    false,
+    ['deriveKey']
+  );
 
-    return crypto.subtle.deriveKey(
-        {
-            name: "PBKDF2",
-            salt: salt.buffer as ArrayBuffer,
-            iterations,
-            hash: "SHA-256",
-        },
-        keyMaterial,
-        { name: "AES-KW", length: 256 },
-        true,
-        ["wrapKey", "unwrapKey"]
-    );
+  return crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: forceArrayBuffer(kdf.salt),
+      iterations: kdf.iterations,
+      hash: kdf.hash,
+    },
+    baseKey,
+    { name: 'AES-KW', length: 256 },
+    false,
+    ['wrapKey', 'unwrapKey']
+  );
 }
 
-export async function importDEK(rawDek: Uint8Array): Promise<CryptoKey> {
-    return crypto.subtle.importKey(
-        "raw",
-        rawDek.buffer as ArrayBuffer,
-        { name: "AES-GCM" },
-        true,
-        ["encrypt", "decrypt"]
-    );
+export async function importDEK(raw: Uint8Array, extractable = true): Promise<CryptoKey> {
+  return crypto.subtle.importKey(
+    'raw',
+    forceArrayBuffer(raw),
+    'AES-GCM',
+    extractable,
+    ['encrypt', 'decrypt']
+  );
 }
 
-export async function wrapDEK(
-    masterPassword: string,
-    dek: Uint8Array
-): Promise<{ wrappedKey: string; salt: string }> {
-    const salt = crypto.getRandomValues(new Uint8Array(16));
-    const wrappingKey = await getKeyFromPassword(masterPassword, salt);
+export async function wrapDEK(password: string, dek: Uint8Array) {
+  const saltBytes = crypto.getRandomValues(new Uint8Array(16));
+  const saltBuffer = saltBytes.slice().buffer;
 
-    const cryptoKey = await crypto.subtle.importKey(
-        "raw",
-        dek.buffer as ArrayBuffer,
-        { name: "AES-GCM" },
-        true,
-        ["encrypt", "decrypt"]
-    );
+  const kdf = {
+    salt: saltBuffer,
+    iterations: 600_000,
+    hash: 'SHA-512' as const,
+  };
 
-    const wrappedKey = await crypto.subtle.wrapKey(
-        "raw",
-        cryptoKey,
-        wrappingKey,
-        "AES-KW"
-    );
+  const wrappingKey = await deriveWrappingKey(password, kdf);
+  const dekKey = await importDEK(dek, true);
 
-    return {
-        wrappedKey: arrayBufferToBase64(wrappedKey as ArrayBuffer),
-        salt: arrayBufferToBase64(salt.buffer as ArrayBuffer),
-    };
+  const wrapped = await crypto.subtle.wrapKey('raw', dekKey, wrappingKey, 'AES-KW');
+  const wrappedBuffer = forceArrayBuffer(wrapped);
+
+  const verifier = await encryptData(dekKey, 'password-check', 'verifier-v1');
+
+  return {
+    wrappedKey: ab2b64(wrappedBuffer),
+    kdf: { ...kdf, salt: ab2b64(saltBuffer) }, // export salt as base64
+    verifier,
+  };
 }
 
 export async function unwrapDEK(
-    masterPassword: string,
-    wrappedKeyBase64: string,
-    saltBase64: string
+  password: string,
+  wrappedKeyBase64: string,
+  kdf: { salt: string; iterations: number; hash: 'SHA-512' }
 ): Promise<CryptoKey> {
-    const salt = new Uint8Array(base64ToArrayBuffer(saltBase64));
-    const wrappedKey = base64ToArrayBuffer(wrappedKeyBase64);
+  const saltBuffer = b642ab(kdf.salt);
+  const wrappingKey = await deriveWrappingKey(password, { ...kdf, salt: saltBuffer });
+  const rawBuffer = forceArrayBuffer(b642ab(wrappedKeyBase64));
 
-    const wrappingKey = await getKeyFromPassword(masterPassword, salt);
+  return crypto.subtle.unwrapKey(
+    'raw',
+    rawBuffer,
+    wrappingKey,
+    'AES-KW',
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
 
-    const cryptoKey = await crypto.subtle.unwrapKey(
-        "raw",
-        wrappedKey as ArrayBuffer,
-        wrappingKey,
-        "AES-KW",
-        { name: "AES-GCM", length: 256 },
-        true,
-        ["encrypt", "decrypt"]
-    );
-
-    return cryptoKey;
+export async function verifyMasterPassword(
+  password: string,
+  wrappedKey: string,
+  kdf: { salt: string; iterations: number; hash: 'SHA-512' },
+  verifier: { ciphertext: string; iv: string }
+): Promise<boolean> {
+  try {
+    const dek = await unwrapDEK(password, wrappedKey, kdf);
+    const plaintext = await decryptData(dek, verifier, 'verifier-v1');
+    return plaintext === 'password-check';
+  } catch {
+    return false;
+  }
 }
 
 export async function encryptData(
-    dekCryptoKey: CryptoKey,
-    plaintext: string
+  key: CryptoKey,
+  plaintext: string,
+  context?: string
 ): Promise<{ ciphertext: string; iv: string }> {
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const enc = new TextEncoder();
-    const encrypted = await crypto.subtle.encrypt(
-        { name: "AES-GCM", iv },
-        dekCryptoKey,
-        enc.encode(plaintext)
-    );
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const enc = new TextEncoder();
+  const additionalData = context ? forceArrayBuffer(enc.encode(context)) : undefined;
 
-    return {
-        ciphertext: arrayBufferToBase64(encrypted as ArrayBuffer),
-        iv: arrayBufferToBase64(iv.buffer as ArrayBuffer),
-    };
+  const encrypted = await crypto.subtle.encrypt(
+    {
+      name: 'AES-GCM',
+      iv: forceArrayBuffer(iv),
+      additionalData,
+    },
+    key,
+    forceArrayBuffer(enc.encode(plaintext))
+  );
+
+  return {
+    ciphertext: ab2b64(forceArrayBuffer(encrypted)),
+    iv: ab2b64(forceArrayBuffer(iv)),
+  };
 }
 
 export async function decryptData(
-    dekCryptoKey: CryptoKey,
-    encryptedData: { ciphertext: string; iv: string }
+  key: CryptoKey,
+  encrypted: { ciphertext: string; iv: string },
+  context?: string
 ): Promise<string> {
-    const { ciphertext, iv } = encryptedData;
-    const dec = new TextDecoder();
+  const enc = new TextEncoder();
+  const dec = new TextDecoder();
+  const additionalData = context ? forceArrayBuffer(enc.encode(context)) : undefined;
 
-    const decrypted = await crypto.subtle.decrypt(
-        { name: "AES-GCM", iv: base64ToArrayBuffer(iv) as ArrayBuffer },
-        dekCryptoKey,
-        base64ToArrayBuffer(ciphertext) as ArrayBuffer
-    );
+  const decrypted = await crypto.subtle.decrypt(
+    {
+      name: 'AES-GCM',
+      iv: forceArrayBuffer(b642ab(encrypted.iv)),
+      additionalData,
+    },
+    key,
+    forceArrayBuffer(b642ab(encrypted.ciphertext))
+  );
 
-    return dec.decode(decrypted);
+  return dec.decode(decrypted);
 }

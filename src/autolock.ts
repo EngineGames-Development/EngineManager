@@ -3,14 +3,13 @@ import { unwrapDEK } from "./password_encryption.js";
 const AUTOLOCK_TIME = 5 * 60 * 1000;
 
 let lockTimer: number | null = null;
-let isLocked = false;
+let visibilityTimer: number | null = null;
+let isLocked = hasMasterPassword();
 let dekCryptoKey: CryptoKey | null = null;
+let autolockStarted = false;
 
 function hasMasterPassword(): boolean {
-    return (
-        !!localStorage.getItem("wrappedDEK") &&
-        !!localStorage.getItem("dekSalt")
-    );
+    return !!localStorage.getItem("wrappedDEK");
 }
 
 function clearDEK() {
@@ -22,18 +21,29 @@ export function lockApp() {
 
     clearDEK();
     isLocked = true;
-
     document.dispatchEvent(new Event("app-locked"));
+
+    if (lockTimer !== null) {
+        clearTimeout(lockTimer);
+        lockTimer = null;
+    }
 }
 
 export async function unlockApp(password: string): Promise<boolean> {
-    const wrappedDEK = localStorage.getItem("wrappedDEK");
-    const salt = localStorage.getItem("dekSalt");
-
-    if (!wrappedDEK || !salt) return true;
+    if (!hasMasterPassword()) {
+        isLocked = false;
+        return true;
+    }
 
     try {
-        dekCryptoKey = await unwrapDEK(password, wrappedDEK, salt);
+        const stored = JSON.parse(localStorage.getItem("wrappedDEK")!);
+
+        dekCryptoKey = await unwrapDEK(
+            password,
+            stored.wrappedKey,
+            stored.kdf
+        );
+
         isLocked = false;
         resetAutolockTimer();
         return true;
@@ -53,33 +63,34 @@ export function getDEK(): CryptoKey | null {
 export function resetAutolockTimer() {
     if (!hasMasterPassword() || isLocked) return;
 
-    if (lockTimer !== null) {
-        clearTimeout(lockTimer);
-    }
-
+    if (lockTimer !== null) clearTimeout(lockTimer);
     lockTimer = window.setTimeout(lockApp, AUTOLOCK_TIME);
 }
 
 export function startAutolock() {
-    if (!hasMasterPassword()) return;
+    if (!hasMasterPassword() || autolockStarted) return;
 
+    autolockStarted = true;
     resetAutolockTimer();
 
-    const events = [
-        "mousemove",
-        "keydown",
-        "click",
-        "scroll",
-        "touchstart",
-    ];
-
-    events.forEach(event =>
+    const activityEvents = ["mousemove", "click", "scroll", "touchstart"];
+    activityEvents.forEach(event =>
         window.addEventListener(event, resetAutolockTimer, { passive: true })
     );
 
-    document.addEventListener("visibilitychange", () => {
-        if (document.hidden) lockApp();
-    });
+    window.addEventListener("keydown", resetAutolockTimer);
 
-    window.addEventListener("beforeunload", lockApp);
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+            visibilityTimer = window.setTimeout(lockApp, AUTOLOCK_TIME);
+        } else if (visibilityTimer) {
+            clearTimeout(visibilityTimer);
+            visibilityTimer = null;
+            resetAutolockTimer();
+        }
+    });
+}
+
+if (hasMasterPassword()) {
+    lockApp();
 }

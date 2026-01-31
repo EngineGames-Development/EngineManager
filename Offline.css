@@ -100,6 +100,13 @@ labels {
     margin-top: 4px;
 }
 
+.check-text {
+    color: var(--reversed-text-color);
+    font-size: 0.85rem;
+    display: block;
+    margin-top: 4px;
+}
+
 .form-input.changed {
   border-color: #4f8ef7;
   box-shadow: 0 0 6px rgba(79, 142, 247, 0.4);
@@ -288,7 +295,7 @@ button {
     font-size: 18px;
 }
 
-.container, .add-container, .master-password-container, .autolock {
+.container, .add-container, .master-password-container, .autolock, .password-validation, .password-view {
     position: fixed;
     top: 0;
     left: 0;

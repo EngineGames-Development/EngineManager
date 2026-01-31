@@ -1,15 +1,20 @@
 export const SecurePDF = {
-  createSecurePDF: async (masterPassword: string, filename = "masterpassword.pdf") => {
+  async createSecurePDF(
+    masterPassword: string,
+    filename = "masterpassword.pdf"
+  ) {
     if (!masterPassword) {
       alert("Please enter a master password first!");
       return;
     }
-    
-    const pdfLib = await import(
-      "https://cdn.jsdelivr.net/npm/pdf-lib@1.21.0/+esm"
-    );
 
-    const { PDFDocument, StandardFonts, rgb } = pdfLib.default;
+    if (!window.PDFLib) {
+      alert("PDF library not loaded");
+      return;
+    }
+
+    const { PDFDocument, StandardFonts, rgb } = window.PDFLib;
+    const enc = new TextEncoder();
 
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([600, 400]);
@@ -23,28 +28,25 @@ export const SecurePDF = {
       color: rgb(0, 0, 0),
     });
 
-    const passwordMessage = `
-Important: This is your master password:
-${masterPassword}
-
-Keep it safe. If you lose it, it cannot be recovered.
-Print or store it securely.
-`;
-    page.drawText(passwordMessage, {
-      x: 50,
-      y: 250,
-      size: 12,
-      font,
-      color: rgb(0, 0, 0),
-    });
+    page.drawText(
+      `MASTER PASSWORD\n\n${masterPassword}\n\nKEEP THIS SAFE.\nIF LOST, IT CANNOT BE RECOVERED.`,
+      {
+        x: 50,
+        y: 250,
+        size: 12,
+        font,
+      }
+    );
 
     const pdfBytes = await pdfDoc.save();
-    const pdfArrayBuffer = new Uint8Array(pdfBytes).buffer;
+    const pdfBuffer = new Uint8Array(pdfBytes).buffer;
 
-    const encoder = new TextEncoder();
-    const passwordKey = await crypto.subtle.importKey(
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+
+    const baseKey = await crypto.subtle.importKey(
       "raw",
-      encoder.encode(masterPassword),
+      enc.encode(masterPassword),
       "PBKDF2",
       false,
       ["deriveKey"]
@@ -53,41 +55,44 @@ Print or store it securely.
     const aesKey = await crypto.subtle.deriveKey(
       {
         name: "PBKDF2",
-        salt: encoder.encode("engine-manager-pdf-salt"),
-        iterations: 200_000,
-        hash: "SHA-256",
+        salt,
+        iterations: 600_000,
+        hash: "SHA-512",
       },
-      passwordKey,
+      baseKey,
       { name: "AES-GCM", length: 256 },
-      true,
+      false,
       ["encrypt", "decrypt"]
     );
 
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const encryptedBuffer = await crypto.subtle.encrypt(
+    const encrypted = await crypto.subtle.encrypt(
       { name: "AES-GCM", iv },
       aesKey,
-      pdfArrayBuffer
+      pdfBuffer
     );
 
-    const combined = new Uint8Array(iv.length + encryptedBuffer.byteLength);
-    combined.set(iv, 0);
-    combined.set(new Uint8Array(encryptedBuffer), iv.length);
+    const out = new Uint8Array(
+      salt.byteLength + iv.byteLength + encrypted.byteLength
+    );
 
-    const encryptedBlob = new Blob([combined], { type: "application/octet-stream" });
-    const encryptedLink = document.createElement("a");
-    encryptedLink.href = URL.createObjectURL(encryptedBlob);
-    encryptedLink.download = filename.replace(".pdf", ".enc");
-    encryptedLink.click();
+    out.set(salt, 0);
+    out.set(iv, salt.byteLength);
+    out.set(new Uint8Array(encrypted), salt.byteLength + iv.byteLength);
 
-    const printableBlob = new Blob([new Uint8Array(pdfArrayBuffer)], { type: "application/pdf" });
-    const printableLink = document.createElement("a");
-    printableLink.href = URL.createObjectURL(printableBlob);
-    printableLink.download = filename;
-    printableLink.click();
+    const encBlob = new Blob([out], { type: "application/octet-stream" });
+    const encLink = document.createElement("a");
+    encLink.href = URL.createObjectURL(encBlob);
+    encLink.download = filename.replace(".pdf", ".enc");
+    encLink.click();
+
+    const pdfBlob = new Blob([pdfBuffer], { type: "application/pdf" });
+    const pdfLink = document.createElement("a");
+    pdfLink.href = URL.createObjectURL(pdfBlob);
+    pdfLink.download = filename;
+    pdfLink.click();
 
     alert(
-      "Your PDF has been encrypted (AES-256) and a printable backup has been downloaded. Keep your master password safe!"
+      "Encrypted backup (.enc) created.\n\nKeep your master password safe — it CANNOT be recovered."
     );
   },
 };
