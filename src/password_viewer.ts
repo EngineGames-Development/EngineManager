@@ -1,3 +1,4 @@
+// password view, save(import export), search
 import { getElement } from './main.js';
 
 export function validatePassword(data: unknown) {

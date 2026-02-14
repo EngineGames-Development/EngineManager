@@ -30,9 +30,9 @@
       https://cdn.jsdelivr.net;
      img-src
       'self'
-      data: https://www.google.com https://t2.gstatic.com https://www.freeiconspng.com;
-      object-src 'none';
-      base-uri 'self';
+      data: https://www.google.com https://*.gstatic.com https://www.freeiconspng.com;
+     object-src 'none';
+     base-uri 'self';
     ">
     <script src="/js/vendor/pdf-lib.min.js"></script>
     <link rel="stylesheet" href="Offline.css" type="text/css">
@@ -113,6 +113,7 @@
          <i class="fa-solid fa-arrow-rotate-left generate"></i>
          <i class="fa-solid fa-eye toggle-password"></i>
         </div>
+        <button id="registerBiometricBtn"><i class="fa-solid fa-fingerprint"></i> Enable Biometric Unlock</button>
         <button id="addmasterpasswordBtn" type="button">Add</button>
         <button class="cancel-btn" type="button">Cancel</button>
       </div>
@@ -125,6 +126,7 @@
          <input name="password" id="autolock-password-input" class="form-input input-password" type="password" required>
          <i class="fa-solid fa-eye toggle-password"></i>
         </div>
+        <button id="biometricUnlockBtn"><i class="fa-solid fa-fingerprint"></i> Unlock with Biometrics</button>
         <button id="continueBtn" type="button">Continue</button>
         <button class="leave-btn" type="button" onclick="window.location.href='https://www.google.com';">Leave</button>
       </div>

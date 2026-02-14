@@ -1,263 +1,249 @@
-import { applyTheme, setupThemeToggle } from './theme.js';
-import { validateWebsite, validatePassword } from './validation.js';
-import { generateRandomPassword, generateMemorablePassword } from './passwordGen.js';
-import { showError, showValid, togglePasswordVisibility, triggerPrint, updateEmptyState } from './ui.js';
-import { SecurePDF } from './secure_pdf.js';
-import { wrapDEK } from './password_encryption.js';
-import { startAutolock, unlockApp, isAppLocked, } from "./autolock.js";
+import { applyTheme, setupThemeToggle } from "./theme.js";
+import { validateWebsite, validatePassword } from "./validation.js";
+import { generateRandomPassword, generateMemorablePassword } from "./passwordGen.js";
+import { showError, showValid, togglePasswordVisibility, triggerPrint, updateEmptyState } from "./ui.js";
+import { SecurePDF } from "./secure_pdf.js";
+import { wrapDEK, unwrapDEK } from "./password_encryption.js";
+import { startAutolock, unlockApp, isAppLocked } from "./autolock.js";
+import { addPassword, createPasswordContainer } from "./password_creation.js";
+import { setVaultKey, clearVaultKey } from "./vault.js";
+import { registerBiometric, authenticateBiometric } from "./biometric.js";
 
-import { addPassword } from './password_creation.js';
-
-export function getID<T extends HTMLElement>(selector: string): T {
-  const el = document.getElementById(selector);
-  if (!el) throw new Error(`Element ${selector} not found`);
+export function getID<T extends HTMLElement>(id: string): T {
+  const el = document.getElementById(id);
+  if (!el) throw new Error(`Missing element ${id}`);
   return el as T;
 }
+
 export function getElement<T extends HTMLElement>(selector: string): T {
   const el = document.querySelector(selector);
-  if (!el) throw new Error(`Element ${selector} not found`);
+  if (!el) throw new Error(`Missing element ${selector}`);
   return el as T;
 }
 
-export function getChildElement<T extends HTMLElement>(
-  parent: Element,
-  selector: string
-): T {
+export function getChildElement<T extends HTMLElement>(parent: Element, selector: string): T {
   const el = parent.querySelector(selector);
-  if (!el) throw new Error(`Element ${selector} not found inside parent`);
+  if (!el) throw new Error(`Missing element ${selector}`);
   return el as T;
 }
 
-export function showAutolock(show : any) {
-    const autolockOverlay = getElement<HTMLDivElement>(".autolock");
-    autolockOverlay.style.display = show ? "flex" : "none";
-}
-
-export function requireUnlocked() {
-    if (isAppLocked()) {
-      showAutolock(true);
-      throw new Error("App is locked");
-    }
+function hasMasterPassword(): boolean {
+  return !!localStorage.getItem("wrappedDEK");
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    const continueBtn = getID<HTMLButtonElement>("continueBtn");
-    const autolockPasswordInput = getID<HTMLInputElement>("autolock-password-input");
+  setupThemeToggle();
+  applyTheme(localStorage.getItem("theme") || "system");
+  getID<HTMLSpanElement>("year").textContent = new Date().getFullYear().toString();
 
-    document.addEventListener("app-locked", () => {
-      showAutolock(true);
+  const container = getElement<HTMLDivElement>(".container");
+  const addContainer = getElement<HTMLDivElement>(".add-container");
+  const masterPasswordContainer = getElement<HTMLDivElement>(".master-password-container");
+
+  const websiteInput = getID<HTMLInputElement>("websiteinputbox");
+  const onlineBtn = getID<HTMLButtonElement>("onlineBtn");
+  const addBtn = getID<HTMLButtonElement>("add-button");
+  const addMasterBtn = getID<HTMLButtonElement>("addmasterpasswordBtn");
+  const masterPasswordInput = getID<HTMLInputElement>("master-password-input");
+  const autolockPasswordInput = getID<HTMLInputElement>("autolock-password-input");
+  const continueBtn = getID<HTMLButtonElement>("continueBtn");
+
+  const onlinePopup = getChildElement<HTMLDivElement>(container, ".popup");
+  const onlineEnterBtn = getChildElement<HTMLButtonElement>(onlinePopup, "button:first-of-type");
+  const onlineCancelBtn = getChildElement<HTMLButtonElement>(onlinePopup, "button:last-of-type");
+  const dontShowCheckbox = getChildElement<HTMLInputElement>(onlinePopup, "input[type='checkbox']");
+
+  function showAutolock(show: boolean) {
+    const overlay = getElement<HTMLDivElement>(".autolock");
+    overlay.style.display = show ? "flex" : "none";
+  }
+
+  continueBtn.addEventListener("click", async () => {
+    const password = autolockPasswordInput.value;
+    const success = await unlockApp(password);
+    if (!success) return alert("Incorrect master password");
+    autolockPasswordInput.value = "";
+    showAutolock(false);
+    await createPasswordContainer();
+  });
+
+  websiteInput.addEventListener("input", () => {
+    const r = validateWebsite(websiteInput.value.trim());
+    r.valid ? showValid(websiteInput) : showError(websiteInput, r.error);
+  });
+
+  document.querySelectorAll(".input-wrapper").forEach(wrapper => {
+    const passwordInput = getChildElement<HTMLInputElement>(wrapper, "input");
+    const generateBtn = wrapper.querySelector<HTMLElement>(".generate");
+    const thinkingBtn = wrapper.querySelector<HTMLElement>(".thinking");
+    const toggleBtn = wrapper.querySelector<HTMLButtonElement>(".toggle-password");
+    const paper = wrapper.querySelector<HTMLDivElement>(".paper");
+    const printBtn = document.querySelector<HTMLElement>(".print");
+
+    passwordInput.addEventListener("input", () => {
+      const result = validatePassword(passwordInput.value.trim());
+      result.valid ? showValid(passwordInput) : showError(passwordInput, result.error);
+      getID<HTMLElement>("passwordCheck").textContent =
+        `Your password is: ${result.strength} and takes about ${result.crackTime} to crack.`;
     });
 
-    continueBtn.addEventListener("click", async () => {
-      const password = autolockPasswordInput.value;
+    toggleBtn?.addEventListener("click", () => togglePasswordVisibility(passwordInput, toggleBtn));
 
-      const success = await unlockApp(password);
+    generateBtn?.addEventListener("click", () => {
+      generateBtn.classList.remove("spin");
+      void generateBtn.offsetWidth;
+      generateBtn.classList.add("spin");
+      passwordInput.classList.add("changed");
+      setTimeout(() => passwordInput.classList.remove("changed"), 1000);
+      passwordInput.value = generateRandomPassword(24);
+      passwordInput.dispatchEvent(new Event("input"));
+    });
 
-      if (!success) {
-        alert("Incorrect master password");
+    thinkingBtn?.addEventListener("click", async () => {
+      thinkingBtn.classList.remove("scale");
+      void thinkingBtn.offsetWidth;
+      thinkingBtn.classList.add("scale");
+      passwordInput.classList.add("changed");
+      setTimeout(() => passwordInput.classList.remove("changed"), 1000);
+      passwordInput.value = await generateMemorablePassword({ wordCount: 8, separator: "-" });
+      passwordInput.dispatchEvent(new Event("input"));
+    });
+
+    if (printBtn && paper) {
+      printBtn.addEventListener("click", () => triggerPrint(printBtn, paper, passwordInput.value));
+    }
+  });
+
+  updateEmptyState();
+
+  onlineBtn.addEventListener("click", e => {
+    e.preventDefault();
+    if (localStorage.getItem("skipPopup") === "true") window.location.href = "Online.html";
+    else container.style.display = "flex";
+  });
+
+  onlineEnterBtn.addEventListener("click", () => {
+    if (dontShowCheckbox.checked) localStorage.setItem("skipPopup", "true");
+    container.style.display = "none";
+    window.location.href = "Online.html";
+  });
+
+  onlineCancelBtn.addEventListener("click", () => container.style.display = "none");
+
+  addBtn.addEventListener("click", () => addContainer.style.display = "flex");
+
+  document.querySelectorAll(".add-password-btn, #addpasswordBtn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if (isAppLocked()) {
+        showAutolock(true);
         return;
       }
 
-      autolockPasswordInput.value = "";
-      showAutolock(false);
-    });
+      const websiteValue = websiteInput.value.trim();
+      const activePasswordInput = getChildElement<HTMLInputElement>(addContainer, ".input-wrapper input");
+      const passwordValue = activePasswordInput.value.trim();
 
-    startAutolock();
-    setupThemeToggle();
-    applyTheme(localStorage.getItem("theme") || "system");
-    getID<HTMLSpanElement>("year").textContent = new Date().getFullYear().toString();
+      const websiteResult = validateWebsite(websiteValue);
+      const passwordResult = validatePassword(passwordValue);
+
+      websiteResult.valid ? showValid(websiteInput) : showError(websiteInput, websiteResult.error);
+      passwordResult.valid ? showValid(activePasswordInput) : showError(activePasswordInput, passwordResult.error);
+
+      if (!websiteResult.valid || !passwordResult.valid) return;
+
+      addContainer.style.display = "none";
+
+      if (!hasMasterPassword()) {
+        masterPasswordContainer.style.display = "flex";
+        return;
+      }
+
+      await addPassword();
+      await createPasswordContainer();
+    });
+  });
+
+  addMasterBtn.addEventListener("click", async () => {
+    const masterpassword = masterPasswordInput.value.trim();
+    if (!masterpassword) return alert("Enter a master password!");
+
+    const dek = crypto.getRandomValues(new Uint8Array(32));
+    const wrapped = await wrapDEK(masterpassword, dek);
+    localStorage.setItem("wrappedDEK", JSON.stringify(wrapped));
+
+    const key = await unwrapDEK(masterpassword, wrapped.wrappedKey, wrapped.kdf);
+    setVaultKey(key);
     
-    const container = getElement<HTMLDivElement>(".container");
-    const addContainer = getElement<HTMLDivElement>(".add-container");
-    const masterPasswordContainer = getElement<HTMLDivElement>(".master-password-container");
 
-    const websiteInput = getID<HTMLInputElement>("websiteinputbox");
-
-    const onlineBtn = getID<HTMLButtonElement>("onlineBtn");
-    const addBtn = getID<HTMLButtonElement>("add-button");
-    const addmasterpasswordBtn = getID<HTMLButtonElement>("addmasterpasswordBtn");
-    const masterpasswordinput = getID<HTMLInputElement>("master-password-input");
-
-    const onlinePopup = getChildElement<HTMLDivElement>(container, ".popup");
-    const onlineEnterBtn = getChildElement<HTMLButtonElement>(onlinePopup,"button:first-of-type");
-    const onlineCancelBtn = getChildElement<HTMLButtonElement>(onlinePopup,"button:last-of-type");
-    const dontShowCheckbox = getChildElement<HTMLInputElement>(onlinePopup,"input[type='checkbox']");
-
-    websiteInput.addEventListener("input", () => {
-        const result = validateWebsite(websiteInput.value.trim());
-
-        result.valid ? showValid(websiteInput) : showError(websiteInput, result.error);
-    });
-
-    document.querySelectorAll(".input-wrapper").forEach(wrapper => {
-        const passwordInput = getChildElement<HTMLInputElement>(wrapper, "input");
-
-        const generateBtn = wrapper.querySelector<HTMLElement>(".generate");
-        const thinkingBtn = wrapper.querySelector<HTMLElement>(".thinking");
-        const toggleBtn = wrapper.querySelector<HTMLButtonElement>(".toggle-password");
-        const paper = wrapper.querySelector<HTMLDivElement>(".paper");
-        const printBtn = document.querySelector<HTMLElement>(".print");
-
-        passwordInput.addEventListener("input", () => {
-            const checktext = getID<HTMLElement>("passwordCheck");
-            const result = validatePassword(passwordInput.value.trim());
-            const strength = result.strength;
-            const estimatedtime = result.crackTime;
-
-            result.valid
-                ? showValid(passwordInput)
-                : showError(passwordInput, result.error);
-
-            checktext.textContent = "Your password is: " + strength + " and takes about " + estimatedtime + " to crack.";
-        });
-
-        if (toggleBtn) {
-            toggleBtn.addEventListener("click", () =>
-                togglePasswordVisibility(passwordInput, toggleBtn)
-            );
-        }
-
-        if (generateBtn) {
-            generateBtn.addEventListener("click", () => {
-                generateBtn.classList.remove("spin");
-                void generateBtn.offsetWidth;
-                generateBtn.classList.add("spin");
-                passwordInput.classList.add("changed");
-                setTimeout(() => passwordInput.classList.remove("changed"), 1000);
-
-                passwordInput.value = generateRandomPassword(24);
-
-                const checktext = getID<HTMLElement>("passwordCheck");
-                const result = validatePassword(passwordInput.value.trim());
-                const strength = result.strength;
-                const estimatedtime = result.crackTime;
-
-                result.valid
-                    ? showValid(passwordInput)
-                    : showError(passwordInput, result.error);
-
-                checktext.textContent = "Your password is: " + strength + " and takes about " + estimatedtime + " to crack.";
-            });
-        }
-
-        if (thinkingBtn) {
-            thinkingBtn.addEventListener("click", async () => {
-                thinkingBtn.classList.remove("scale");
-                void thinkingBtn.offsetWidth;
-                thinkingBtn.classList.add("scale");
-                passwordInput.classList.add("changed");
-                setTimeout(() => passwordInput.classList.remove("changed"), 1000);
-
-                passwordInput.value = await generateMemorablePassword({
-                    wordCount: 8,
-                    separator: "-"
-                });
-
-                const checktext = getID<HTMLElement>("passwordCheck");
-                const result = validatePassword(passwordInput.value.trim());
-                const strength = result.strength;
-                const estimatedtime = result.crackTime;
-
-                result.valid
-                    ? showValid(passwordInput)
-                    : showError(passwordInput, result.error);
-
-                checktext.textContent = "Your password is: " + strength + " and takes about " + estimatedtime + " to crack.";
-            });
-        }
-
-        if (printBtn && paper) {
-            printBtn.addEventListener("click", () =>
-                triggerPrint(printBtn, paper, passwordInput.value)
-            );
-        }
-    });
-
-
-    function isMasterPasswordSet() {
-      return localStorage.getItem("wrappedDEK") !== null;
+    const credentialId = await registerBiometric();
+    if (credentialId) {
+      localStorage.setItem("biometricCredentialId", credentialId);
     }
 
-    updateEmptyState();
 
-    onlineBtn.addEventListener("click", e => {
-        e.preventDefault();
-        if (localStorage.getItem("skipPopup") === "true") window.location.href = "Online.html";
-        else container.style.display = "flex";
+    masterPasswordInput.value = "";
+    masterPasswordContainer.style.display = "none";
+
+    await addPassword();
+    await createPasswordContainer();
+    startAutolock();
+  });
+
+  getElement<HTMLElement>(".print").addEventListener("click", () => {
+    const masterPassword = masterPasswordInput.value.trim();
+    SecurePDF.createSecurePDF(masterPassword, "masterpassword.pdf");
+  });
+
+  document.querySelectorAll(".cancel-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      addContainer.style.display = "none";
+      masterPasswordContainer.style.display = "none";
     });
+  });
+  
+  const registerBtn = document.getElementById("registerBiometricBtn");
 
-    onlineEnterBtn.addEventListener("click", () => {
-        if (dontShowCheckbox.checked) localStorage.setItem("skipPopup", "true");
-        container.style.display = "none";
-        window.location.href = "Online.html";
-    });
+  registerBtn?.addEventListener("click", async () => {
+   try {
+     const credentialId = await registerBiometric();
+     if (credentialId) {
+       localStorage.setItem("biometricCredentialId", credentialId);
+       alert("Biometric unlock registered!");
+     } else {
+       alert("Biometric registration failed or was cancelled.");
+     }
+   } catch (err) {
+     console.error(err);
+     alert("Error registering biometric: " + (err as Error).message);
+   }
+  });
 
-    onlineCancelBtn.addEventListener("click", () => container.style.display = "none");
+  const biometricBtn = document.getElementById("biometricUnlockBtn");
+  
+  biometricBtn?.addEventListener("click", async () => {
+    const credentialId = localStorage.getItem("biometricCredentialId");
+    if (!credentialId) return alert("No biometric registered.");
 
-    addBtn.addEventListener("click", () => addContainer.style.display = "flex");
-    
-    document.querySelectorAll(".add-password-btn, #addpasswordBtn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const websiteValue = websiteInput.value.trim();
-        const activePasswordInput = getChildElement<HTMLInputElement>(addContainer,".input-wrapper input");
-        const passwordValue = activePasswordInput.value.trim();
+    const success = await authenticateBiometric(credentialId);
+    if (!success) return alert("Biometric authentication failed.");
 
-        const websiteResult = validateWebsite(websiteValue);
-        const passwordResult = validatePassword(passwordValue);
+    const stored = JSON.parse(localStorage.getItem("wrappedDEK")!);
+    const masterPassword = prompt("Enter master password to restore vault key")?.trim();
+    if (!masterPassword) return;
 
-        websiteResult.valid
-            ? showValid(websiteInput)
-            : showError(websiteInput, websiteResult.error);
+    const key = await unwrapDEK(masterPassword, stored.wrappedKey, stored.kdf);
+    setVaultKey(key);
+    alert("Vault unlocked with biometrics!");
+  });
 
-        passwordResult.valid
-            ? showValid(activePasswordInput)
-            : showError(activePasswordInput, passwordResult.error);
+  document.addEventListener("app-locked", () => {
+    clearVaultKey();
+    showAutolock(true);
+  });
 
-        if (!websiteResult.valid || !passwordResult.valid) return;
+  startAutolock();
 
-        addContainer.style.display = "none";
-
-        if (isMasterPasswordSet()) {
-            addPassword();
-            masterPasswordContainer.style.display = "none";
-        } else {
-            masterPasswordContainer.style.display = "flex";
-        }
-      });
-    });
-
-    addmasterpasswordBtn.addEventListener("click", async () => {
-        const masterpassword = masterpasswordinput.value.trim();
-        if (!masterpassword) {
-            alert("Enter a master password!")
-            return;
-        }
-
-        const dek = crypto.getRandomValues(new Uint8Array(32));
-
-        const wrapped = await wrapDEK(masterpassword, dek);
-        
-        localStorage.setItem("wrappedDEK", JSON.stringify(wrapped));
-        startAutolock();
-
-        alert("Master password saved securely!");
-        masterpasswordinput.value = "";
-        masterPasswordContainer.style.display = "none";
-        addPassword();
-        updateEmptyState();
-    });
-
-    getElement<HTMLElement>(".print").addEventListener("click", () => {
-      const masterPasswordInput = getElement<HTMLInputElement>('.master-password-container input');
-      const masterPassword = masterPasswordInput.value.trim();
-
-      SecurePDF.createSecurePDF(masterPassword, 'masterpassword.pdf');
-    });
-
-    document.querySelectorAll(".cancel-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            addContainer.style.display = "none";
-            masterPasswordContainer.style.display = "none";
-        });
-    });
+  if (hasMasterPassword() && isAppLocked()) {
+    showAutolock(true);
+  }
 });

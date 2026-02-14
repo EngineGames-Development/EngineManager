@@ -374,12 +374,13 @@ button {
     transition: background 0.3s, transform 0.2s;
 }
 
-.popup button:first-of-type {
+.popup button:first-of-type, #continueBtn, #addmasterpasswordBtn {
     background-color: #4CAF50;
     color: white;
+    margin-bottom: 5px;
 }
 
-.popup button:first-of-type:hover {
+.popup button:first-of-type:hover, #continueBtn:hover, #addmasterpasswordBtn:hover {
     background-color: #45a049;
     transform: scale(1.05);
 }
@@ -459,6 +460,12 @@ button {
 .add-btn:hover {
     background: linear-gradient(90deg, #ff2d2d, #ff7b7b);
 }
+
+.locked button.add-password-btn {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
 
 section[id="main"] p {
     margin-top: 10px;
