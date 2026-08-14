@@ -18,7 +18,10 @@ function getChildElement<T extends HTMLElement>(
   return el as T;
 }
 
-getID<HTMLSpanElement>("year").textContent = new Date().getFullYear().toString();
+const yearEl = document.getElementById("year");
+if (yearEl) {
+    yearEl.textContent = new Date().getFullYear().toString();
+}
 
 export function escapeHTML(str : string) {
     return str
@@ -26,16 +29,21 @@ export function escapeHTML(str : string) {
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+        .replace(/'/g, "'");
 }
 
-getID<HTMLButtonElement>("login-button").addEventListener("click", () => {
-    console.log("Login button clicked (placeholder)");
-});
+const loginBtn = document.getElementById("login-button");
+if (loginBtn) {
+    loginBtn.addEventListener("click", () => {
+        console.log("Login button clicked (placeholder)");
+    });
+}
 
 function setEqualHeightsPerRow() {
-    const container = getElement<HTMLDivElement>('.card-container');
-    if (!container) return;
+    const container = document.querySelector<HTMLDivElement>('.card-container');
+    
+    if (!container) return; 
+    
     const cards = Array.from(container.children) as HTMLElement[];
     let rowTop = 0;
     let rowCards : HTMLElement[] = [];
@@ -63,12 +71,10 @@ function setEqualHeightsPerRow() {
     rowCards.forEach(c => c.style.height = maxHeight + 'px');
 }
 
-
 window.addEventListener('load', setEqualHeightsPerRow);
 window.addEventListener('resize', setEqualHeightsPerRow);
 
 const themeButtons = document.querySelectorAll('#theme-toggle, #footer-theme-toggle');
-
 let currentTheme = localStorage.getItem('theme') || 'system';
 
 function applyTheme(theme : string) {
@@ -94,15 +100,18 @@ themeButtons.forEach(btn => {
   });
 });
 
-
 applyTheme(currentTheme);
 
 document.addEventListener("DOMContentLoaded", () => {
-  const container = getElement<HTMLDivElement>(".container");
-  const onlineBtn = getID<HTMLButtonElement>("onlineBtn");
-  const enterBtn = getElement<HTMLButtonElement>(".popup button:first-of-type");
-  const cancelBtn = getElement<HTMLButtonElement>(".popup button:last-of-type");
-  const dontShowCheckbox = getElement<HTMLInputElement>(".popup input[type='checkbox']");
+  const container = document.querySelector<HTMLDivElement>(".container");
+  const onlineBtn = document.getElementById("onlineBtn") as HTMLButtonElement | null;
+  const enterBtn = document.querySelector<HTMLButtonElement>(".popup button:first-of-type");
+  const cancelBtn = document.querySelector<HTMLButtonElement>(".popup button:last-of-type");
+  const dontShowCheckbox = document.querySelector<HTMLInputElement>(".popup input[type='checkbox']");
+
+  if (!container || !onlineBtn || !enterBtn || !cancelBtn || !dontShowCheckbox) {
+    return;
+  }
 
   onlineBtn.addEventListener("click", (e) => {
     e.preventDefault();
