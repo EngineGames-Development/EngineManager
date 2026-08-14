@@ -49,7 +49,7 @@ export async function createPasswordContainer() {
       item.className = "password-item";
       const img = document.createElement("img");
       img.src = await getFavicon(decrypted.website);
-      img.width = 32;
+      img.width = 32;1
       img.height = 32;
       const p = document.createElement("p");
       p.textContent = decrypted.website;
