@@ -1,5 +1,5 @@
 import { unwrapDEK } from "./password_encryption.js";
-import { setVaultKey, clearVaultKey } from "./vault.js";
+import { setVaultKey, clearVaultKey, getVaultKeyCached } from "./vault.js";
 
 const AUTOLOCK_TIME = 5 * 60 * 1000;
 
@@ -8,6 +8,8 @@ let visibilityTimer: number | null = null;
 let locked = hasMasterPassword();
 let started = false;
 
+let dekCryptoKey: CryptoKey | null = null;
+
 function hasMasterPassword(): boolean {
   return !!localStorage.getItem("wrappedDEK");
 }
@@ -15,6 +17,7 @@ function hasMasterPassword(): boolean {
 export function lockApp() {
   if (!hasMasterPassword()) return;
   clearVaultKey();
+  dekCryptoKey = null;
   locked = true;
   document.dispatchEvent(new Event("app-locked"));
   if (lockTimer) clearTimeout(lockTimer);
@@ -29,13 +32,25 @@ export async function unlockApp(password: string): Promise<boolean> {
 
   try {
     const stored = JSON.parse(localStorage.getItem("wrappedDEK")!);
-    const dek = await unwrapDEK(password, stored.wrappedKey, stored.kdf);
-    setVaultKey(dek);
+    dekCryptoKey = await unwrapDEK(password, stored.wrappedKey, stored.kdf);
+    setVaultKey(dekCryptoKey);
     locked = false;
     resetAutolockTimer();
     return true;
   } catch {
     return false;
+  }
+}
+
+export function getDEK(): CryptoKey | null {
+  return dekCryptoKey;
+}
+
+export function getUnlockedDEK(): CryptoKey | null {
+  try {
+    return getVaultKeyCached();
+  } catch {
+    return null;
   }
 }
 
@@ -67,6 +82,14 @@ export function startAutolock() {
       resetAutolockTimer();
     }
   });
+}
+
+export function unlockWithDEK(dek: CryptoKey) {
+  setVaultKey(dek);
+  dekCryptoKey = dek;
+  locked = false;
+  resetAutolockTimer();
+  document.dispatchEvent(new Event("app-unlocked"));
 }
 
 if (hasMasterPassword()) lockApp();

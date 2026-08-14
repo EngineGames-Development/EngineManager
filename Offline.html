@@ -34,6 +34,8 @@
      object-src 'none';
      base-uri 'self';
     ">
+    <meta name="referrer" content="no-referrer">
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <script src="/js/vendor/pdf-lib.min.js"></script>
     <link rel="stylesheet" href="Offline.css" type="text/css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -132,8 +134,19 @@
       </div>
     </div>
     <div class="main-header">
+     <div class="centered-row">
       <h1>Passwords and Passkeys</h1>
-      <button id="add-button" class="add-btn">Add</button>
+      <div class="button-row">
+       <button id="add-button" class="add-btn">Add Password</button>
+       <div class="vault-buttons">
+        <div class="file-upload-wrapper">
+          <input type="file" id="importVaultInput" accept="application/json" />
+          <button id="importVaultBtn" type="button" class="vault-btn">📂 Import Vault</button>
+        </div>
+        <button id="exportVaultBtn" class="vault-btn">💾 Export Vault</button>
+       </div>
+      </div>
+     </div>
     </div>
     <p>Create and manage passwords.</p>
     <div id="password-container"></div>
@@ -157,7 +170,7 @@
       <a href="/"><h1>Engine</h1><h1 id="manager">Manager</h1></a>
     </span>
     <div class="footer-buttons">
-      <a href="https://www.youtube.com/@The_Core_dumped" target="_blank" class="footer-btn youtube-btn">
+      <a href="https://www.youtube.com/@The_Core_dumped" target="_blank" rel="noopener noreferrer" class="footer-btn youtube-btn">
         <img src="Youtube_logo.png" alt="YouTube" width="50px" height=auto>
       </a>
       <button id="footer-theme-toggle" class="footer-btn">🌙</button>

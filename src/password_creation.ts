@@ -2,6 +2,7 @@ import { encryptData, decryptData } from "./password_encryption.js";
 import { getVaultKeyCached } from "./vault.js";
 import { updateEmptyState } from "./ui.js";
 import { getID } from "./main.js";
+import { validatePassword } from './password_viewer.js';
 
 export async function addPassword() {
   const dek = getVaultKeyCached();
@@ -54,6 +55,23 @@ export async function createPasswordContainer() {
       p.textContent = decrypted.website;
       item.append(img, p);
       container.appendChild(item);
+      const svgNS = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(svgNS, "svg");
+      svg.setAttribute("width", "24");
+      svg.setAttribute("height", "24");
+      svg.setAttribute("viewBox", "0 0 24 24");
+      svg.style.marginLeft = "8px";
+      svg.style.color = "white";
+
+      const path = document.createElementNS(svgNS, "path");
+      path.setAttribute("fill", "currentColor");
+      path.setAttribute("d", "M12 5 L12 19 L19 12 Z");
+      svg.appendChild(path);
+      svg.style.cursor = "pointer";
+      item.appendChild(svg);
+      svg.addEventListener("click", () => {
+        validatePassword(decrypted);
+      });
     } catch {}
   }
   updateEmptyState();
