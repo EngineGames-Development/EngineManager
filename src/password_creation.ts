@@ -2,8 +2,8 @@ import { encryptData, decryptData } from "./password_encryption.js";
 import { getVaultKeyCached } from "./vault.js";
 import { updateEmptyState } from "./ui.js";
 import { getID } from "./main.js";
-import { validatePassword } from './password_viewer.js';
-
+import { openPasswordValidation } from './password_viewer.js';
+ 
 export async function addPassword() {
   const dek = getVaultKeyCached();
   const data = {
@@ -19,15 +19,16 @@ export async function addPassword() {
   updateEmptyState();
   await createPasswordContainer();
 }
-
+ 
 async function getFavicon(domain: string) {
-  const fallback = "https://www.freeiconspng.com/uploads/globe-icon-18.png";
+  const fallback = "./Placeholder.png";
   try {
     if (!/^https?:\/\//i.test(domain)) domain = "https://" + domain;
     const host = new URL(domain).hostname;
-    const url = `https://www.google.com/s2/favicons?sz=64&domain=${host}`;
+    const url = `https://${host}/favicon.ico`;
     return await new Promise<string>(r => {
       const i = new Image();
+      i.referrerPolicy = "no-referrer";
       i.onload = () => r(url);
       i.onerror = () => r(fallback);
       i.src = url;
@@ -36,7 +37,7 @@ async function getFavicon(domain: string) {
     return fallback;
   }
 }
-
+ 
 export async function createPasswordContainer() {
   const dek = getVaultKeyCached();
   const stored = JSON.parse(localStorage.getItem("encryptedPasswords") || "[]");
@@ -48,8 +49,9 @@ export async function createPasswordContainer() {
       const item = document.createElement("div");
       item.className = "password-item";
       const img = document.createElement("img");
+      img.referrerPolicy = "no-referrer";
       img.src = await getFavicon(decrypted.website);
-      img.width = 32;1
+      img.width = 32;
       img.height = 32;
       const p = document.createElement("p");
       p.textContent = decrypted.website;
@@ -62,7 +64,7 @@ export async function createPasswordContainer() {
       svg.setAttribute("viewBox", "0 0 24 24");
       svg.style.marginLeft = "8px";
       svg.style.color = "white";
-
+ 
       const path = document.createElementNS(svgNS, "path");
       path.setAttribute("fill", "currentColor");
       path.setAttribute("d", "M12 5 L12 19 L19 12 Z");
@@ -70,7 +72,7 @@ export async function createPasswordContainer() {
       svg.style.cursor = "pointer";
       item.appendChild(svg);
       svg.addEventListener("click", () => {
-        validatePassword(decrypted);
+        openPasswordValidation(decrypted);
       });
     } catch {}
   }
